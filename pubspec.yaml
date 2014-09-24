@@ -1,0 +1,10 @@
+name: OE Build
+version: 0.1.0
+author: Sungguk Lim
+description: An easy script to build OE
+homepage: www.limsungugk.com
+environment:
+sdk: '>=1.0.0 <2.0.0'
+dependencies:
+  args: any
+  grinder: '>= 0.6.0'
