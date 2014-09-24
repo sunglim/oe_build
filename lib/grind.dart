@@ -7,21 +7,26 @@ import 'dart:io';
 import 'package:grinder/grinder.dart';
 
 void main([List<String> args]) {
-    task('remove_oe', remove_oe);
-    task('clone_oe', clone_oe, ['remove_oe']);
-    task('build_flash', build_flash);
-    task('build_nfs', build_nfs);
-    task('build_flash_dvb', build_flash_dvb);
-    task('build_nfs_dvb', build_nfs_dvb);
+  task('clean', clean);
+  task('clone_oe', clone_oe);
+  task('build_flash', build_flash, ['clone_oe']);
+  task('build_nfs', build_nfs, ['clone_oe']);
+  task('build_flash_dvb', build_flash_dvb, ['clone_oe']);
+  task('build_nfs_dvb', build_nfs_dvb, ['clone_oe']);
 
-    startGrinder(args);
+  startGrinder(args);
 }
 
-void remove_oe(GrinderContext context) {
+void clean(GrinderContext context) {
   _runCommandSync(context, 'rm -rf beehive');
 }
 
 void clone_oe(GrinderContext context) {
+  if (joinDir(Directory.current, ['beehive']).existsSync()) {
+    context.log("beehive directory is already exist. Stop cloning.");
+    return;
+  }
+
   context.log("## Start clone OE Repository ##");
   _runCommandSync(context,
     'git clone ssh://polar.lge.com:29438/starfish/build-starfish.git beehive');
@@ -53,11 +58,6 @@ void build_nfs_dvb(GrinderContext context) {
 }
 
 void _build(GrinderContext context, String flashOrNfs) {
-  if (!joinDir(Directory.current, ['beehive']).existsSync()) {
-    context.log("## Clone OE ##");
-    clone_oe(context);
-  }
-
   Directory originalDirectory = Directory.current;
 
   Directory.current = joinDir(Directory.current, ['beehive', 'BUILD-m14tv']);
