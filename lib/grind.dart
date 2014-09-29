@@ -9,6 +9,7 @@ import 'package:grinder/grinder.dart';
 void main([List<String> args]) {
   task('clean', clean);
   task('clone_oe', clone_oe);
+  task('ccc_clone', ccc_clone);
   task('build_flash', build_flash, ['clone_oe']);
   task('build_nfs', build_nfs, ['clone_oe']);
   task('build_flash_dvb', build_flash_dvb, ['clone_oe']);
@@ -34,6 +35,21 @@ void clone_oe(GrinderContext context) {
 
   Directory originalDirectory = Directory.current;
   Directory.current = joinDir(Directory.current, ['beehive']);
+  _runCommandSync(context, 'git checkout @beehive4tv');
+  context.log("## Run MCF ##");
+  _runCommandSync(context,
+      './mcf -b 16 -p 16 m14tv --premirror=file:///starfish/downloads');
+  Directory.current = originalDirectory;
+}
+
+void ccc_clone(GrinderContext context) {
+  _runCommandSync(context, 'rm -rf ccc');
+  context.log("## Start clone OE Repository ##");
+  _runCommandSync(context,
+    'git clone ssh://polar.lge.com:29438/starfish/build-starfish.git ccc');
+
+  Directory originalDirectory = Directory.current;
+  Directory.current = joinDir(Directory.current, ['ccc']);
   _runCommandSync(context, 'git checkout @beehive4tv');
   context.log("## Run MCF ##");
   _runCommandSync(context,
