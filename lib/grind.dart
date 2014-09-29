@@ -6,6 +6,18 @@ library oe_setup;
 import 'dart:io';
 import 'package:grinder/grinder.dart';
 
+// The directory name we will clone to.
+// should be different depending on chip name.
+// ie, for m14tv, it should be "beehive". On the other hand, for lm15u,
+// "beehive_lm15u".
+var _directory_name = "beehive";
+var _chip_name = "m14tv";
+
+void set_m15u(GrinderContext context) {
+  _directory_name = "beehive_lm15u";
+  _chip_name = "lm15u";
+}
+
 void main([List<String> args]) {
   task('clean', clean);
   task('clone_oe', clone_oe);
@@ -14,6 +26,13 @@ void main([List<String> args]) {
   task('build_nfs', build_nfs, ['clone_oe']);
   task('build_flash_dvb', build_flash_dvb, ['clone_oe']);
   task('build_nfs_dvb', build_nfs_dvb, ['clone_oe']);
+//---------------------------------------------------
+  task('set_m15u', set_m15u);
+  task('lm15u_clone_oe', clone_oe, ['set_m15u']);
+  task('lm15u_build_flash', build_flash, ['set_m15u', 'clone_oe']);
+  task('lm15u_build_nfs', build_nfs, ['set_m15u', 'clone_oe']);
+  task('lm15u_build_flash_dvb', build_flash_dvb, ['set_m15u', 'clone_oe']);
+  task('lm15u_build_nfs_dvb', build_nfs_dvb, ['set_m15u', 'clone_oe']);
 
   startGrinder(args);
 }
@@ -23,22 +42,22 @@ void clean(GrinderContext context) {
 }
 
 void clone_oe(GrinderContext context) {
-  if (joinDir(Directory.current, ['beehive']).existsSync()) {
-    context.log("beehive directory is already exist. Stop cloning.");
+  if (joinDir(Directory.current, ['${_directory_name}']).existsSync()) {
+    context.log("${_directory_name} directory is already exist. Stop cloning.");
     return;
   }
 
   context.log("## Start clone OE Repository ##");
   _runCommandSync(context,
-    'git clone ssh://polar.lge.com:29438/starfish/build-starfish.git beehive');
-  _runCommandSync(context, 'cp ./tools/webos-local.conf ./beehive');
+    'git clone ssh://polar.lge.com:29438/starfish/build-starfish.git ${_directory_name}');
+  _runCommandSync(context, 'cp ./tools/webos-local.conf ./${_directory_name}');
 
   Directory originalDirectory = Directory.current;
-  Directory.current = joinDir(Directory.current, ['beehive']);
+  Directory.current = joinDir(Directory.current, ['${_directory_name}']);
   _runCommandSync(context, 'git checkout @beehive4tv');
   context.log("## Run MCF ##");
   _runCommandSync(context,
-      './mcf -b 16 -p 16 m14tv --premirror=file:///starfish/downloads');
+      './mcf -b 16 -p 16 ${_chip_name} --premirror=file:///starfish/downloads');
   Directory.current = originalDirectory;
 }
 
@@ -53,7 +72,7 @@ void ccc_clone(GrinderContext context) {
   _runCommandSync(context, 'git checkout @beehive4tv');
   context.log("## Run MCF ##");
   _runCommandSync(context,
-      './mcf -b 16 -p 16 m14tv --premirror=file:///starfish/downloads');
+      './mcf -b 16 -p 16 ${_chip_name} --premirror=file:///starfish/downloads');
   Directory.current = originalDirectory;
 }
 
@@ -76,7 +95,8 @@ void build_nfs_dvb(GrinderContext context) {
 void _build(GrinderContext context, String flashOrNfs) {
   Directory originalDirectory = Directory.current;
 
-  Directory.current = joinDir(Directory.current, ['beehive', 'BUILD-m14tv']);
+  Directory.current =
+      joinDir(Directory.current, ['${_directory_name}', 'BUILD-${_chip_name}']);
   context.log(Directory.current.path);
   context.log("## Start bitbake build ##");
   _runBashCommandSync(context, 'source bitbake.rc;bitbake ${flashOrNfs}');
