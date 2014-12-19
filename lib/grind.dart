@@ -18,14 +18,27 @@ void set_m15u(GrinderContext context) {
   _chip_name = "lm15u";
 }
 
+void set_h15(GrinderContext context) {
+  _directory_name = "beehive_h15";
+  _chip_name = "h15";
+}
+
 void main([List<String> args]) {
   task('clean', clean);
   task('clone_oe', clone_oe);
   task('ccc_clone', ccc_clone);
+  task('ccc_clone_h15_badland', ccc_clone_h15);
   task('build_flash', build_flash, ['clone_oe']);
   task('build_nfs', build_nfs, ['clone_oe']);
   task('build_flash_dvb', build_flash_dvb, ['clone_oe']);
   task('build_nfs_dvb', build_nfs_dvb, ['clone_oe']);
+//---------------------------------------------------
+  task('set_h15', set_h15);
+  task('h15_clone_oe', clone_oe, ['set_h15']);
+  task('h15_build_flash', build_flash, ['set_h15', 'clone_oe']);
+  task('h15_build_nfs', build_nfs, ['set_h15', 'clone_oe']);
+  task('h15_build_flash_dvb', build_flash_dvb, ['set_h15', 'clone_oe']);
+  task('h15_build_nfs_dvb', build_nfs_dvb, ['set_h15', 'clone_oe']);
 //---------------------------------------------------
   task('set_m15u', set_m15u);
   task('lm15u_clone_oe', clone_oe, ['set_m15u']);
@@ -33,12 +46,26 @@ void main([List<String> args]) {
   task('lm15u_build_nfs', build_nfs, ['set_m15u', 'clone_oe']);
   task('lm15u_build_flash_dvb', build_flash_dvb, ['set_m15u', 'clone_oe']);
   task('lm15u_build_nfs_dvb', build_nfs_dvb, ['set_m15u', 'clone_oe']);
+//---------------------------------------------------
+  task('lm15u_clean_hybridtv', clean_hybridtv, ['set_m15u']);
 
   startGrinder(args);
 }
 
 void clean(GrinderContext context) {
   _runCommandSync(context, 'rm -rf beehive');
+}
+
+void clean_hybridtv(GrinderContext context) {
+  Directory originalDirectory = Directory.current;
+
+  Directory.current =
+      joinDir(Directory.current, ['${_directory_name}', 'BUILD-${_chip_name}']);
+  context.log(Directory.current.path);
+  context.log("## Start bitbake build ##");
+  _runBashCommandSync(context, 'source bitbake.rc;bitbake -c cleanall hybridtv');
+
+  Directory.current = originalDirectory;
 }
 
 void clone_oe(GrinderContext context) {
@@ -73,6 +100,21 @@ void ccc_clone(GrinderContext context) {
   context.log("## Run MCF ##");
   _runCommandSync(context,
       './mcf -b 16 -p 16 ${_chip_name} --premirror=file:///starfish/downloads');
+  Directory.current = originalDirectory;
+}
+
+void ccc_clone_h15(GrinderContext context) {
+  _runCommandSync(context, 'rm -rf ccc_h15');
+  context.log("## Start clone OE Repository ##");
+  _runCommandSync(context,
+    'git clone ssh://polar.lge.com:29438/starfish/build-starfish.git ccc_h15');
+
+  Directory originalDirectory = Directory.current;
+  Directory.current = joinDir(Directory.current, ['ccc_h15']);
+  _runCommandSync(context, 'git checkout @17.badlands.h15');
+  context.log("## Run MCF ##");
+  _runCommandSync(context,
+      './mcf -b 16 -p 16 h15 --premirror=file:///starfish/downloads');
   Directory.current = originalDirectory;
 }
 
