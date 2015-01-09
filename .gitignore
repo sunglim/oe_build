@@ -16,5 +16,6 @@ pubspec.lock
 beehive/
 beehive_lm15u/
 ccc/
-ccc_h15/
 ccc_badlands/
+ccc_h15/
+ccc_lm15u/

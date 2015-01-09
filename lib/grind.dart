@@ -29,6 +29,7 @@ void main([List<String> args]) {
   task('ccc_clone', ccc_clone);
   task('ccc_clone_badlands', ccc_clone_badlands);
   task('ccc_clone_h15_badland', ccc_clone_h15);
+  task('ccc_clone_lm15u_badland', ccc_clone_lm15u);
   task('build_flash', build_flash, ['clone_oe']);
   task('build_nfs', build_nfs, ['clone_oe']);
   task('build_flash_dvb', build_flash_dvb, ['clone_oe']);
@@ -112,12 +113,28 @@ void ccc_clone_h15(GrinderContext context) {
 
   Directory originalDirectory = Directory.current;
   Directory.current = joinDir(Directory.current, ['ccc_h15']);
-  _runCommandSync(context, 'git checkout @17.badlands.h15');
+  _runCommandSync(context, 'git checkout @41.badlands.h15');
   context.log("## Run MCF ##");
   _runCommandSync(context,
       './mcf -b 16 -p 16 h15 --premirror=file:///starfish/downloads');
   Directory.current = originalDirectory;
 }
+
+void ccc_clone_lm15u(GrinderContext context) {
+  _runCommandSync(context, 'rm -rf ccc_lm15u');
+  context.log("## Start clone OE Repository ##");
+  _runCommandSync(context,
+    'git clone ssh://polar.lge.com:29438/starfish/build-starfish.git ccc_lm15u');
+
+  Directory originalDirectory = Directory.current;
+  Directory.current = joinDir(Directory.current, ['ccc_lm15u']);
+  _runCommandSync(context, 'git checkout @45.badlands.lm15u');
+  context.log("## Run MCF ##");
+  _runCommandSync(context,
+      './mcf -b 16 -p 16 lm15u --premirror=file:///starfish/downloads');
+  Directory.current = originalDirectory;
+}
+
 void ccc_clone_badlands(GrinderContext context) {
   _runCommandSync(context, 'rm -rf ccc_badlands');
   context.log("## Start clone OE Repository ##");
